@@ -1222,8 +1222,10 @@ static enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
             snprintf(buf, sizeof(buf),
                      "{\"success\":true,\"title_name\":\"%s\",\"title_id\":\"%s\","
                      "\"app_version\":\"%s\",\"pkg_type\":\"%s\",\"file_size\":%llu,"
+                     "\"sdk_version\":%u,"
                      "\"total_pkg_size\":%llu,\"can_install\":%s,\"install_disabled_reason\":\"%s\"}",
                      title, tid, version, type, (unsigned long long)pkg.file_size,
+                     pkg.sdk_version,
                      (unsigned long long)pkg.total_pkg_size,
                      eligibility.can_install ? "true" : "false", reason);
         }

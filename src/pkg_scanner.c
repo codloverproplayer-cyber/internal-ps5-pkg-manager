@@ -104,7 +104,7 @@ static int compare_pkg_by_title_name(const void *a, const void *b) {
 
 #define MAX_PACKAGES 4096
 #define MAX_DRIVES   16
-#define PKG_MANIFEST_VERSION 3
+#define PKG_MANIFEST_VERSION 4
 
 static pkg_detail_t g_packages[MAX_PACKAGES];
 static size_t g_package_count = 0;
@@ -333,6 +333,7 @@ static int save_manifest_locked(void) {
                    "      \"default_language\": \"%s\",\n"
                    "      \"content_id\": \"%s\",\n"
                    "      \"app_version\": \"%s\",\n"
+                   "      \"sdk_version\": %u,\n"
                    "      \"file_size\": %llu,\n"
                    "      \"total_pkg_size\": %llu,\n"
                    "      \"icon_offset\": %llu,\n"
@@ -349,6 +350,7 @@ static int save_manifest_locked(void) {
                    "      \"blurhash\": \"%s\"\n"
                    "    }%s\n",
                 esc_path, esc_fn, esc_tid, esc_tname, esc_loc, esc_def_lang, esc_cid, esc_ver,
+                p->sdk_version,
                 (unsigned long long)p->file_size,
                 (unsigned long long)(p->total_pkg_size > 0 ? p->total_pkg_size : p->file_size),
                 (unsigned long long)p->icon_offset,
@@ -539,6 +541,8 @@ static int load_manifest_locked(void) {
                             extract_json_field(item, "blurhash", pkg->blurhash, sizeof(pkg->blurhash));
 
                             char val[64];
+                            extract_json_field(item, "sdk_version", val, sizeof(val));
+                            if (val[0]) pkg->sdk_version = (uint32_t)strtoul(val, NULL, 10);
                             extract_json_field(item, "file_size", val, sizeof(val));
                             if (val[0]) pkg->file_size = (uint64_t)strtoull(val, NULL, 10);
 
@@ -2180,6 +2184,7 @@ char *pkg_scanner_packages_for_drive_to_json_ex(const char *drive_id_or_path, co
             "\"default_language\":\"%s\","
             "\"content_id\":\"%s\","
             "\"app_version\":\"%s\","
+            "\"sdk_version\":%u,"
             "\"file_size\":%llu,"
             "\"total_pkg_size\":%llu,"
             "\"has_icon\":%s,"
@@ -2209,6 +2214,7 @@ char *pkg_scanner_packages_for_drive_to_json_ex(const char *drive_id_or_path, co
             esc_def_lang,
             esc_content_id,
             esc_app_version,
+            pkg->sdk_version,
             (unsigned long long)pkg->file_size,
             (unsigned long long)(pkg->total_pkg_size > 0 ? pkg->total_pkg_size : pkg->file_size),
             pkg->has_icon ? "true" : "false",

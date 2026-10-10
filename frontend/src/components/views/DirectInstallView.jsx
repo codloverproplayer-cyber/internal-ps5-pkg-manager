@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import SdkBadge from '../SdkBadge';
 import { collectDroppedPkgFiles, collectInputPkgFiles } from '../../utils/collectPkgFiles';
 import { pendingStates, queueStateLabel, canQueueBrowserFile } from '../../utils/installQueue';
 import { formatBytes, formatVersion } from '../../utils/formatters';
@@ -63,6 +64,7 @@ export default function DirectInstallView({ queue, onBack, onOpenQueue }) {
                 <h3 className="text-sm font-semibold break-words">{title}</h3>
                 <p className="text-xs text-zinc-400 truncate" title={local.path || local.file.name}>{local.path || local.file.name}</p>
                 <p className="text-xs text-zinc-400">{[local.details?.title_id, formatVersion(local.details?.app_version), formatBytes(local.file.size)].filter(Boolean).join(' · ')}</p>
+                <SdkBadge pkg={local.details} />
                 <p className={`text-xs ${problem ? 'text-amber-300' : job?.state === 'completed' ? 'text-emerald-300' : 'text-blue-300'}`}>{job ? queueStateLabel(job) : local.status === 'reading' ? 'Reading package…' : local.status === 'error' ? 'Unable to read package' : canQueue ? 'Ready' : 'Not installable'}</p>
                 {job?.state === 'installing' && <div role="progressbar" aria-label={`${title} installation progress`} aria-valuenow={Math.floor(Math.max(0, job.progress))} aria-valuemin={0} aria-valuemax={100} className="h-1 bg-white/10">
                   <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, Math.max(0, job.progress))}%` }} />

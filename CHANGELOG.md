@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.1
+
+- Added support for PS5 backport patches that previously appeared as unknown packages
+- Show an "SDK target" badge for PS5 packages when the executable's SDK version can be read reliably
+- Improved installed-version detection so newer PS5 patches can be installed and already installed updates are correctly recognized
+
+---
+
 ## v1.5.0
 
 ### Install Queue

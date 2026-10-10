@@ -433,6 +433,8 @@ int pkg_cache_lookup(const char *checksum, pkg_detail_t *out_detail) {
     memset(out_detail, 0, sizeof(*out_detail));
 
     char val[512];
+    extract_json_field(buf, "sdk_version", val, sizeof(val));
+    if (val[0]) out_detail->sdk_version = (uint32_t)strtoul(val, NULL, 10);
     extract_json_field(buf, "title_id", out_detail->title_id, sizeof(out_detail->title_id));
     extract_json_field(buf, "title_name", out_detail->title_name, sizeof(out_detail->title_name));
     extract_json_field(buf, "localized_titles", out_detail->localized_titles, sizeof(out_detail->localized_titles));
@@ -519,6 +521,7 @@ static int write_meta_json(const char *dir_path, const pkg_detail_t *detail, con
                "  \"default_language\": \"%s\",\n"
                "  \"content_id\": \"%s\",\n"
                "  \"app_version\": \"%s\",\n"
+               "  \"sdk_version\": %u,\n"
                "  \"file_size\": %llu,\n"
                "  \"total_pkg_size\": %llu,\n"
                "  \"icon_offset\": %llu,\n"
@@ -534,6 +537,7 @@ static int write_meta_json(const char *dir_path, const pkg_detail_t *detail, con
                "  \"blurhash\": \"%s\"\n"
                "}\n",
             esc_title_id, esc_title_name, esc_loc, esc_def_lang, esc_content_id, esc_app_ver,
+            detail->sdk_version,
             (unsigned long long)detail->file_size,
             (unsigned long long)(detail->total_pkg_size > 0 ? detail->total_pkg_size : detail->file_size),
             (unsigned long long)detail->icon_offset, detail->icon_size,

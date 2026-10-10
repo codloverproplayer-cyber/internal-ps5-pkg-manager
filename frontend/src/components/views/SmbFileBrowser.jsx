@@ -1,5 +1,6 @@
 import { canQueuePackage, pendingStates } from '../../utils/installQueue';
 import React, { useEffect, useRef, useState } from 'react';
+import SdkBadge from '../SdkBadge';
 import { browseSmb, inspectSmb } from '../../api/smb';
 import { formatBytes } from '../../utils/formatters';
 
@@ -72,6 +73,7 @@ export default function SmbFileBrowser({ share, onBack, onInstall, installQueue 
       {selected && <div className="p-4 border border-cyan-500/40 space-y-3">
         <h3 className="font-bold">{selected.title_name}</h3>
         <p>{selected.title_id} · {selected.pkg_type} · {selected.app_version} · {formatBytes(selected.total_pkg_size || selected.file_size)}</p>
+        <SdkBadge pkg={selected} />
         {!queueable && !queued && <p>{selected.install_disabled_reason}</p>}
         <button className={button} disabled={busy || !queueable} onClick={async () => {
           setBusy(true);

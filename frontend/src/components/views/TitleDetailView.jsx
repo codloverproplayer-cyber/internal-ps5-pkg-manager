@@ -1,5 +1,6 @@
 import React from 'react';
 import BlurIcon from '../../BlurIcon';
+import SdkBadge from '../SdkBadge';
 import { formatBytes, formatVersion } from '../../utils/formatters';
 import { canQueuePackage, pendingStates } from '../../utils/installQueue';
 import { getInstallStorageOptions } from '../../utils/installStorage';
@@ -72,6 +73,7 @@ export default function TitleDetailView({ title: selectedTitle, onBack, onInstal
                     </h2>
 
                     <div className="flex items-center space-x-2.5 mt-3 flex-wrap text-xs sm:text-sm">
+                      <SdkBadge pkg={selectedTitle.base || selectedTitle.primaryPkg} />
                       {selectedTitle.title_id ? (
                         <span className="font-mono px-3 py-1 my-0.5 rounded-[2px] bg-white/5 text-zinc-200 border border-white/10 shrink-0 font-medium">
                           {selectedTitle.title_id}
@@ -449,6 +451,7 @@ export default function TitleDetailView({ title: selectedTitle, onBack, onInstal
                               <span className="text-base font-bold text-white">
                                 {pkg.app_version ? `Update ${formatVersion(pkg.app_version)}` : 'Package Update'}
                               </span>
+                              <SdkBadge pkg={pkg} />
                               {isUpdMultipart ? (
                                 <>
                                   <span className="text-xs sm:text-sm font-mono text-zinc-300 shrink-0 font-medium">

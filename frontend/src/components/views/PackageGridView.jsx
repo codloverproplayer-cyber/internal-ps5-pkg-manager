@@ -1,4 +1,5 @@
 import React from 'react';
+import SdkBadge from '../SdkBadge';
 import BlurIcon from '../../BlurIcon';
 import { formatBytes, formatVersion } from '../../utils/formatters';
 import { getPlatform } from '../../utils/platform';
@@ -251,6 +252,7 @@ export default function PackageGridView({ groupedTitles, searchQuery, onSearch, 
                       </h3>
 
                       {/* Subtitle / ID & Size */}
+                      <SdkBadge pkg={group.base || group.primaryPkg} />
                       <div className="text-xs text-zinc-400 font-mono flex items-center justify-between mt-0.5 w-full">
                         <span>{group.title_id || 'PKG'}</span>
                         <span className="text-zinc-500">
