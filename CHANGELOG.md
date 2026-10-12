@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.1-internal
+
+- Added an "Internal Storage" source that scans `/data/pkg` (including nested subfolders) alongside USB drives and discs
+- Packages in `/data/pkg` install directly from console storage and support multi-part packages
+- Renamed the app to "Internal PKG Manager" (home screen tile, web UI, notifications) and gave the icon a green hue
+
+---
+
 ## v1.5.1
 
 - Added support for PS5 backport patches that previously appeared as unknown packages

@@ -67,7 +67,7 @@ frontend-build:
 	@VERSION=$$(grep '#define PKGMGR_VERSION' include/version.h | awk '{print $$3}' | tr -d '"'); \
 	COMMIT=$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
 	DATE=$$(date -u +"%Y-%m-%d %H:%M:%S UTC"); \
-	TITLE="PKG Manager v$$VERSION ($$COMMIT, $$DATE) by PLK"; \
+	TITLE="Internal PKG Manager v$$VERSION ($$COMMIT, $$DATE) by PLK"; \
 	echo "Updating title in index.html to: $$TITLE"; \
 	(cd frontend && npm ci && VITE_APP_VERSION="$$VERSION" VITE_APP_COMMIT="$$COMMIT" VITE_APP_BUILD_DATE="$$DATE" npm run build); \
 	TMP=$$(mktemp "$${TMPDIR:-/tmp}/pkgmgr.XXXXXX"); \
