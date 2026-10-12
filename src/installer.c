@@ -809,6 +809,15 @@ static int is_usb_or_disc_path(const char *path) {
     }
     if (strncmp(path, "/mnt/disc", 9) == 0) return 1;
 
+    /* Internal storage source (/data/pkg) behaves like a local drive */
+    const char *internal_dir = getenv("PKG_INTERNAL_DIR");
+    if (internal_dir && internal_dir[0] != '\0') {
+        size_t ilen = strlen(internal_dir);
+        if (strncmp(path, internal_dir, ilen) == 0 &&
+            (path[ilen] == '/' || path[ilen] == '\0' || internal_dir[ilen - 1] == '/')) return 1;
+    }
+    if (strncmp(path, "/data/pkg/", 10) == 0) return 1;
+
     const char *scan_dir = getenv("PKG_SCAN_DIR");
     if (scan_dir && scan_dir[0] != '\0') {
         if (strncmp(path, scan_dir, strlen(scan_dir)) == 0) return 1;
