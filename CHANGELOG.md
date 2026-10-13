@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1-datapkg5
+
+- Stream server: parse Range numbers with a built-in 64-bit decimal parser (no libc strtoull); persist the 416 detail line in install.log.
+
 ## v1.5.1-datapkg4
 
 - Diagnostics: log the requested range on HTTP 416, and the first bytes and piece sizes of a numbered piece set whose header cannot be parsed.

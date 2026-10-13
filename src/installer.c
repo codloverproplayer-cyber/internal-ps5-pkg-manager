@@ -1966,10 +1966,10 @@ static int installer_start_internal(const char *pkg_path) {
                     size_t hx = 0;
                     for (ssize_t i = 0; i < hn && hx + 2 < sizeof(hex); i++)
                         hx += (size_t)snprintf(hex + hx, sizeof(hex) - hx, "%02X", hb[i]);
-                    install_log("[INSTALLER] piece set: %u pieces total=%llu; header unparsable, first %d bytes: %s",
+                    install_log("[INSTALLER] WARNING: piece set: %u pieces total=%llu; header unparsable, first %d bytes: %s",
                                 (unsigned)fb_set.count, (unsigned long long)fb_set.total, (int)hn, hex);
                     for (uint32_t i = 0; i < fb_set.count; i++)
-                        install_log("[INSTALLER] piece %u size=%llu", (unsigned)i, (unsigned long long)fb_set.size[i]);
+                        install_log("[INSTALLER] WARNING: piece %u size=%llu", (unsigned)i, (unsigned long long)fb_set.size[i]);
                 }
             }
         }
