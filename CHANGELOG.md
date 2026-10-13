@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.5.1-datapkg2
+
+- Added support for plain numbered piece sets (`<name>_0.pkg`, `<name>_1.pkg`, ...), such as large PSN downloads. The pieces are listed once, as their first piece, and installed as one package without copying or joining them first
+- If the first piece's header can't be read, the title ID is taken from the file name instead of showing "Unknown Package"
+
+---
+
 ## v1.5.1
 
 - Added support for PS5 backport patches that previously appeared as unknown packages

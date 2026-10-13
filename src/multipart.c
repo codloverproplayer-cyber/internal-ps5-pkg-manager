@@ -6,6 +6,7 @@
  */
 
 #include "multipart.h"
+#include "split_pkg.h"
 #include "miniz.h"
 #include "smb_client.h"
 #include "installer.h"
@@ -460,6 +461,33 @@ int virtual_stream_open(const char *initial_path, virtual_stream_t *stream) {
 
     multipart_header_t hdr;
     if (multipart_read_header(local_path, &hdr) != 0) {
+        /* Plain numbered piece set (<name>_0.pkg, <name>_1.pkg, ...): serve the
+         * pieces back to back as one package. Not the PS5MPKG1 format, so
+         * is_multipart stays 0 (no disc/part prompts). */
+        split_pkg_t sp;
+        if (split_pkg_detect(local_path, &sp)) {
+            stream->is_multipart = 0;
+            stream->is_smb = 0;
+            stream->current_part = 1;
+            stream->total_parts = sp.count;
+            stream->total_pkg_size = sp.total;
+            for (uint32_t i = 0; i < sp.count; i++) {
+                if (split_pkg_piece_path(&sp, i, stream->parts[i].path,
+                                         sizeof(stream->parts[i].path)) != 0) {
+                    virtual_stream_close(stream);
+                    return -3;
+                }
+                stream->parts[i].start_pkg_offset = sp.start[i];
+                stream->parts[i].part_data_size = sp.size[i];
+                stream->parts[i].data_offset = 0;
+                stream->parts[i].fd = -1;
+            }
+            const char *sslash = strrchr(local_path, '/');
+            strncpy(stream->pkg_filename, sslash ? sslash + 1 : local_path,
+                    sizeof(stream->pkg_filename) - 1);
+            return 0;
+        }
+
         /* Standard single PKG file */
         stream->is_multipart = 0;
         stream->is_smb = 0;

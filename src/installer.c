@@ -6,6 +6,7 @@
  */
 
 #include "installer.h"
+#include "split_pkg.h"
 #include "install_queue.h"
 #include "install_service.h"
 #include "pkg_parser.h"
@@ -796,6 +797,9 @@ static int is_usb_or_disc_path(const char *path) {
     if (!path || path[0] == '\0') return 0;
     if (strncmp(path, "smb://", 6) == 0) return 0;
     if (strncmp(path, "live:", 5) == 0) return 0;
+    /* A numbered piece set only exists as a whole through the stream server;
+     * handing piece 0 straight to the system installer would be truncated. */
+    if (split_pkg_detect(path, NULL)) return 0;
 
     const char *usb_prefix = getenv("PKG_USB_PREFIX");
     if (usb_prefix && usb_prefix[0] != '\0') {
@@ -1949,6 +1953,11 @@ static int installer_start_internal(const char *pkg_path) {
             struct stat st;
             if (stat(pkg_path_copy, &st) == 0) {
                 detail.file_size = (uint64_t)st.st_size;
+            }
+            split_pkg_t fb_set;
+            if (split_pkg_detect(pkg_path_copy, &fb_set)) {
+                detail.file_size = fb_set.total;
+                detail.total_pkg_size = fb_set.total;
             }
         }
     }
