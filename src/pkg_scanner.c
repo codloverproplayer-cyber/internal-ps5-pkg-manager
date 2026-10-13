@@ -6,6 +6,7 @@
  */
 
 #include "pkg_scanner.h"
+#include "split_pkg.h"
 #include "pkg_cache.h"
 #include "icon_blurhash.h"
 #include "multipart.h"
@@ -748,6 +749,43 @@ static int is_package_file(const char *name) {
     return 0;
 }
 
+/* Like is_package_file(), but also hides later pieces (_1, _2, ...) of a plain
+ * numbered piece set whose piece 0 sits in the same directory: the set is
+ * listed once, as its piece 0. */
+static int is_package_file_in_dir(const char *dir, const char *name) {
+    if (!is_package_file(name)) return 0;
+    return !split_pkg_is_continuation(dir, name);
+}
+
+/* Size used for catalog bookkeeping: the whole set for piece 0 of a numbered
+ * piece set, the file's own size otherwise. */
+static uint64_t scan_effective_size(const char *path, uint64_t file_size) {
+    split_pkg_t sp;
+    if (split_pkg_detect(path, &sp)) return sp.total;
+    return file_size;
+}
+
+/* When a numbered piece set's header could not be parsed, recover the title ID
+ * and content ID from Sony's file name, e.g.
+ *   EP1457-PPSA04135_00-MB2BANNERLORD000_0.pkg */
+static void split_name_identity(const char *path, const char *filename, pkg_detail_t *d) {
+    split_pkg_t sp;
+    if (!split_pkg_detect(path, &sp)) return;
+    size_t n = strlen(filename);
+    if (n < 6 + 16) return;
+    n -= 6; /* drop "_0.pkg" */
+    if (n >= sizeof(d->content_id)) return;
+    const char *t = filename + 7;
+    if (filename[6] != '-' ) return;
+    for (int i = 0; i < 4; i++) if (t[i] < 'A' || t[i] > 'Z') return;
+    for (int i = 4; i < 9; i++) if (t[i] < '0' || t[i] > '9') return;
+    memcpy(d->content_id, filename, n);
+    d->content_id[n] = '\0';
+    memcpy(d->title_id, t, 9);
+    d->title_id[9] = '\0';
+    snprintf(d->title_name, sizeof(d->title_name), "%s", d->title_id);
+}
+
 static int is_drive_mounted(const char *path) {
     if (!path || path[0] == '\0') return 0;
     struct stat st;
@@ -816,7 +854,7 @@ static size_t count_pkg_files(const char *dir_path, int recursive, int depth) {
         struct stat st;
         if (stat(full_path, &st) != 0) continue;
 
-        if (S_ISREG(st.st_mode) && is_package_file(entry->d_name)) {
+        if (S_ISREG(st.st_mode) && is_package_file_in_dir(dir_path, entry->d_name)) {
             count++;
         } else if (S_ISDIR(st.st_mode) && recursive) {
             count += count_pkg_files(full_path, 1, depth + 1);
@@ -901,6 +939,7 @@ static int parse_pkg_entry(const char *full_path, const char *filename,
         out_detail->total_pkg_size = file_size;
         out_detail->mtime = mtime;
         out_detail->is_valid = 1;
+        split_name_identity(full_path, filename, out_detail);
     }
 
     return (!out_detail->is_multipart || out_detail->part_index == 1) ? 0 : 1;
@@ -908,8 +947,9 @@ static int parse_pkg_entry(const char *full_path, const char *filename,
 
 static void process_pkg_file(const char *full_path, const char *filename,
                              const struct stat *st, const char *drive_label) {
+    uint64_t eff_size = scan_effective_size(full_path, (uint64_t)st->st_size);
     pthread_mutex_lock(&g_scanner_mutex);
-    add_scanned_file_locked(full_path, (uint64_t)st->st_size, (uint64_t)st->st_mtime);
+    add_scanned_file_locked(full_path, eff_size, (uint64_t)st->st_mtime);
     pthread_mutex_unlock(&g_scanner_mutex);
 
     pthread_mutex_lock(&g_scan_status_mutex);
@@ -927,7 +967,7 @@ static void process_pkg_file(const char *full_path, const char *filename,
     }
 
     pkg_detail_t detail;
-    int rc = parse_pkg_entry(full_path, filename, (uint64_t)st->st_size, (uint64_t)st->st_mtime, &detail);
+    int rc = parse_pkg_entry(full_path, filename, eff_size, (uint64_t)st->st_mtime, &detail);
     if (rc == 0) {
         pthread_mutex_lock(&g_scanner_mutex);
         memcpy(&g_packages[g_package_count++], &detail, sizeof(pkg_detail_t));
@@ -1024,7 +1064,7 @@ static size_t scan_dir_root(const char *dir_path, const char *drive_label) {
             continue;
         }
 
-        if (S_ISREG(st.st_mode) && is_package_file(entry->d_name)) {
+        if (S_ISREG(st.st_mode) && is_package_file_in_dir(dir_path, entry->d_name)) {
             process_pkg_file(full_path, entry->d_name, &st, drive_label);
         }
     }
@@ -1053,7 +1093,7 @@ static void scan_dir_recursive(const char *dir_path, int depth, const char *driv
 
         if (S_ISDIR(st.st_mode)) {
             scan_dir_recursive(full_path, depth + 1, drive_label);
-        } else if (S_ISREG(st.st_mode) && is_package_file(entry->d_name)) {
+        } else if (S_ISREG(st.st_mode) && is_package_file_in_dir(dir_path, entry->d_name)) {
             process_pkg_file(full_path, entry->d_name, &st, drive_label);
         }
     }
@@ -1360,7 +1400,7 @@ static void collect_local_files_quick(const char *dir_path, int recursive, int d
 
         if (S_ISDIR(st.st_mode) && recursive) {
             collect_local_files_quick(full_path, 1, depth + 1, list);
-        } else if (S_ISREG(st.st_mode) && is_package_file(entry->d_name)) {
+        } else if (S_ISREG(st.st_mode) && is_package_file_in_dir(dir_path, entry->d_name)) {
             if (list->count >= list->capacity) {
                 size_t new_cap = list->capacity == 0 ? 32 : list->capacity * 2;
                 quick_file_entry_t *new_arr = (quick_file_entry_t *)realloc(list->entries, new_cap * sizeof(quick_file_entry_t));
@@ -1377,7 +1417,7 @@ static void collect_local_files_quick(const char *dir_path, int recursive, int d
             e->path[sizeof(e->path) - 1] = '\0';
             strncpy(e->filename, entry->d_name, sizeof(e->filename) - 1);
             e->filename[sizeof(e->filename) - 1] = '\0';
-            e->file_size = (uint64_t)st.st_size;
+            e->file_size = scan_effective_size(full_path, (uint64_t)st.st_size);
             e->mtime = (uint64_t)st.st_mtime;
         }
     }
