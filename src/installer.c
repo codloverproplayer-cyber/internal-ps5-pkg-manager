@@ -1958,6 +1958,19 @@ static int installer_start_internal(const char *pkg_path) {
             if (split_pkg_detect(pkg_path_copy, &fb_set)) {
                 detail.file_size = fb_set.total;
                 detail.total_pkg_size = fb_set.total;
+                {
+                    /* Diagnostics: why could the header not be parsed? */
+                    unsigned char hb[64];
+                    ssize_t hn = split_pkg_pread(&fb_set, hb, sizeof(hb), 0);
+                    char hex[64 * 2 + 1];
+                    size_t hx = 0;
+                    for (ssize_t i = 0; i < hn && hx + 2 < sizeof(hex); i++)
+                        hx += (size_t)snprintf(hex + hx, sizeof(hex) - hx, "%02X", hb[i]);
+                    install_log("[INSTALLER] piece set: %u pieces total=%llu; header unparsable, first %d bytes: %s",
+                                (unsigned)fb_set.count, (unsigned long long)fb_set.total, (int)hn, hex);
+                    for (uint32_t i = 0; i < fb_set.count; i++)
+                        install_log("[INSTALLER] piece %u size=%llu", (unsigned)i, (unsigned long long)fb_set.size[i]);
+                }
             }
         }
     }

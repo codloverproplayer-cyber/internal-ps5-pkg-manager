@@ -772,6 +772,12 @@ static serve_verdict_t serve_one_request(int conn, int conn_id, const char *peer
                     conn_id, peer, req_no, (unsigned long long)total, sres == 0 ? "ok" : strerror(errno),
                     (unsigned long long)(stream_now_ms() - t_start_ms));
         install_log("[STREAM] WARNING: raw 416 Range Not Satisfiable (total=%llu)", (unsigned long long)total);
+        {
+            char raw_rng[160] = {0};
+            int has_rng = stream_header_value(req, "Range", raw_rng, sizeof(raw_rng));
+            install_log("[STREAM] 416 detail: method=%s Range='%s' total=%llu", method,
+                        has_rng ? raw_rng : "<absent>", (unsigned long long)total);
+        }
         stream_debug_log_request(conn_id, req_no, peer, method, path, 1, start, end, 416, 0, total);
         return (sres == 0 && keep_wanted) ? SERVE_KEEP : SERVE_CLOSE;
     }

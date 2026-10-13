@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1-datapkg4
+
+- Diagnostics: log the requested range on HTTP 416, and the first bytes and piece sizes of a numbered piece set whose header cannot be parsed.
+
 ## v1.5.1-datapkg3
 
 - Install queue: a numbered piece set (`_0.pkg`, `_1.pkg`, ...) whose header cannot be parsed is no longer rejected as "source unavailable"; it is streamed using name-derived metadata.
