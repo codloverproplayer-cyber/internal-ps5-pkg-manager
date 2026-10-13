@@ -143,7 +143,7 @@ test-install-service:
 
 test-install-queue:
 	mkdir -p build
-	cc $(TEST_CFLAGS) -o build/test_install_queue tests/test_install_queue.c src/install_queue.c src/sqlite3.c -lpthread -lm -ldl
+	cc $(TEST_CFLAGS) -o build/test_install_queue tests/test_install_queue.c src/install_queue.c src/split_pkg.c src/sqlite3.c -lpthread -lm -ldl
 	./build/test_install_queue
 
 test: $(PARAM_JSON_HEADER) $(ICON0_PNG_HEADER) test-install-service test-install-queue

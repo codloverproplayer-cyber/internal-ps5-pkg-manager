@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1-datapkg3
+
+- Install queue: a numbered piece set (`_0.pkg`, `_1.pkg`, ...) whose header cannot be parsed is no longer rejected as "source unavailable"; it is streamed using name-derived metadata.
+
 ## v1.5.1-datapkg2
 
 - Added support for plain numbered piece sets (`<name>_0.pkg`, `<name>_1.pkg`, ...), such as large PSN downloads. The pieces are listed once, as their first piece, and installed as one package without copying or joining them first
