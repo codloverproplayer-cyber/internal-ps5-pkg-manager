@@ -136,6 +136,48 @@ int main(void) {
     virtual_stream_close(vs);
     free(vs);
 
+    printf("=== header-declared 64 KiB tail is padded with zeros ===\n");
+    {
+        system("rm -rf /tmp/test_split_pad && mkdir -p /tmp/test_split_pad");
+        const size_t len = 150000; /* on-disk bytes across 2 pieces */
+        unsigned char *img = (unsigned char *)calloc(1, len);
+        assert(img);
+        memcpy(img, "\x7f" "FIH", 4);
+        unsigned long long a = 0x10000ULL, b = len - 0x10000ULL, c = 0x10000ULL;
+        for (int k = 0; k < 8; k++) {
+            img[0x10 + k] = (unsigned char)(a >> (8 * k));
+            img[0x18 + k] = (unsigned char)(b >> (8 * k));
+            img[0x28 + k] = (unsigned char)(c >> (8 * k));
+        }
+        for (size_t i = 0x100; i < len; i++) img[i] = (unsigned char)(i * 7 + 1);
+        FILE *p0 = fopen("/tmp/test_split_pad/PAD_0.pkg", "wb");
+        FILE *p1 = fopen("/tmp/test_split_pad/PAD_1.pkg", "wb");
+        assert(p0 && p1);
+        assert(fwrite(img, 1, 100000, p0) == 100000);
+        assert(fwrite(img + 100000, 1, len - 100000, p1) == len - 100000);
+        fclose(p0);
+        fclose(p1);
+        virtual_stream_t *pv = (virtual_stream_t *)calloc(1, sizeof(*pv));
+        assert(pv && virtual_stream_open("/tmp/test_split_pad/PAD_0.pkg", pv) == 0);
+        assert(pv->total_pkg_size == len + 0x10000);
+        unsigned char *all = (unsigned char *)malloc(len + 0x10000);
+        assert(all);
+        uint64_t q = 0;
+        while (q < pv->total_pkg_size) {
+            ssize_t n = virtual_stream_read(pv, q, all + q, pv->total_pkg_size - q);
+            assert(n > 0);
+            q += (uint64_t)n;
+        }
+        assert(memcmp(all, img, len) == 0);
+        for (size_t i = len; i < len + 0x10000; i++) assert(all[i] == 0);
+        assert(virtual_stream_read(pv, len + 0x10000, all, 10) == 0);
+        virtual_stream_close(pv);
+        free(pv);
+        free(all);
+        free(img);
+        system("rm -rf /tmp/test_split_pad");
+    }
+
     free(g_src);
     system("rm -rf " DIR_PATH " " SRC_PATH " /tmp/pkgmgr");
     unsetenv("PKG_SCAN_DIR");

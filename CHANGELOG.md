@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1-datapkg6
+
+- Piece sets whose header declares a 64 KiB tail beyond the pieces on disk are padded with zeros in the stream (experimental).
+
 ## v1.5.1-datapkg5
 
 - Stream server: parse Range numbers with a built-in 64-bit decimal parser (no libc strtoull); persist the 416 detail line in install.log.

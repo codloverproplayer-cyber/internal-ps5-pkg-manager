@@ -1,7 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define PKGMGR_VERSION "1.5.1-datapkg5"
+#define PKGMGR_VERSION "1.5.1-datapkg6"
 
 #ifndef PKGMGR_BUILD_COMMIT
 #define PKGMGR_BUILD_COMMIT "unknown"
